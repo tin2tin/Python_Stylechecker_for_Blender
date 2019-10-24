@@ -22,4 +22,4 @@ You just have to install a package once and uninstalling works the same way:
 ```
   
 ### Then download and install codestyle.py in Blender: 
-https://github.com/tin2tin/Python_Stylechecker_for_Blender/blob/master/codestyle.py
+https://raw.githubusercontent.com/tin2tin/Python_Stylechecker_for_Blender/master/codestyle.py
