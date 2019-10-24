@@ -33,7 +33,7 @@ ignores = {
 
 class StringReport(pycodestyle.StandardReport):
     bl_idname = "text.report_pep8"
-    bl_label = "PEP8 Codestyle"
+    bl_label = "Codestyle"
 
     def get_failures(self):
         """
