@@ -78,7 +78,6 @@ def getfunc(file, context):
     checker = pycodestyle.Checker(file, options=pep8opts, report=report)
     checker.check_all()
     report = checker.report
-
     if report.get_file_results() > 0:
         failures.extend(report.get_failures())
         failures.append('')
@@ -91,14 +90,14 @@ def getfunc(file, context):
             linenumber = l[l.find(start) + len(start):l.rfind(end)]
             end = '] '
             error = l[l.rfind(end) + 2:]
-            character = l.find('^')
-            if error:
-                classes.append([linenumber + ': ' + error.title(), linenumber, character])
+        character = l.find('^')
+        if error and character > -1:
+            classes.append([linenumber + ': ' + error.title(), linenumber, character])
     return classes
 
 
 class TEXT_OT_pep8_button(bpy.types.Operator):
-    """Tooltip"""
+    """Run Codestyle Check"""
     bl_idname = "text.pep8_button"
     bl_label = "Check Codestyle"
 
@@ -108,6 +107,7 @@ class TEXT_OT_pep8_button(bpy.types.Operator):
 
     def execute(self, context):
         old_filename = bpy.context.space_data.text.filepath
+        bpy.types.Scene.pep8_name = old_filename
         filename = bpy.utils.script_path_user() + "temp_pep8.py"
         bpy.ops.text.save_as(filepath=filename, check_existing=False)
         bpy.types.Scene.pep8 = getfunc(filename, context)
@@ -120,7 +120,7 @@ class TEXT_PT_show_pep8(bpy.types.Panel):
     bl_space_type = 'TEXT_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Codestyle"
-    bl_label = "PEP8 Codestyle"
+    bl_label = "Codestyle"
 
     @classmethod
     def poll(cls, context):
@@ -130,19 +130,20 @@ class TEXT_PT_show_pep8(bpy.types.Panel):
         layout = self.layout
         st = context.space_data
         layout.operator("text.pep8_button")
-        items = bpy.types.Scene.pep8
-        for it in items:
-            cname = it[0]
-            cline = it[1]
-            layout = layout.column(align=True)
-            layout.alignment = 'LEFT'
-            layout.operator("text.class_viewer", text=cname).line = int(cline)
+        if bpy.types.Scene.pep8_name == bpy.context.space_data.text.filepath:
+            items = bpy.types.Scene.pep8
+            for it in items:
+                cname = it[0]
+                cline = it[1]
+                layout = layout.column(align=True)
+                layout.alignment = 'LEFT'
+                layout.operator("text.pep8_jump", text=cname).line = int(cline)
 
 
-class TEXT_OT_class_viewer(bpy.types.Operator):
-    """Tooltip"""
-    bl_idname = "text.class_viewer"
-    bl_label = "Class Viewer"
+class TEXT_OT_pep8_jump(bpy.types.Operator):
+    """Jump to line"""
+    bl_idname = "text.pep8_jump"
+    bl_label = "Codestyle Jump"
 
     line: IntProperty(default=0, options={'HIDDEN'})
     character: IntProperty(default=0, options={'HIDDEN'})
@@ -154,7 +155,7 @@ class TEXT_OT_class_viewer(bpy.types.Operator):
     def execute(self, context):
         line = self.line
         character = self.character
-        print(character)
+        #print(character)
         if line > 0:
             bpy.ops.text.jump(line=line)
         self.line = -1
@@ -165,7 +166,7 @@ class TEXT_OT_class_viewer(bpy.types.Operator):
 
 classes = (
     TEXT_PT_show_pep8,
-    TEXT_OT_class_viewer,
+    TEXT_OT_pep8_jump,
     TEXT_OT_pep8_button,
     )
 
@@ -175,6 +176,7 @@ def register():
     for i in classes:
         bpy.utils.register_class(i)
         bpy.types.Scene.pep8 = bpy.props.StringProperty()
+        bpy.types.Scene.pep8_name = bpy.props.StringProperty()
 
 
 def unregister():
@@ -182,6 +184,7 @@ def unregister():
     for i in classes:
         bpy.utils.unregister_class(i)
         del bpy.types.Scene.pep8
+        del bpy.types.Scene.pep8_name
 
 
 if __name__ == "__main__":
