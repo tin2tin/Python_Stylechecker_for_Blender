@@ -1,4 +1,4 @@
-# Python_Stylechecker_for_Blender
+# Python Stylechecker(pep8) for Blender
 [Pycodestyle](https://github.com/PyCQA/pycodestyle) integrated into Blender Text Editor
 
 ### pycodestyle must be installed first:
