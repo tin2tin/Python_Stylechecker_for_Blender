@@ -32,7 +32,7 @@ ignores = {
 
 
 class StringReport(pycodestyle.StandardReport):
-    bl_idname = "text.report_pep8"
+    bl_idname = "text.report_codestyle"
     bl_label = "Codestyle"
 
     def get_failures(self):
@@ -68,14 +68,14 @@ def getfunc(file, context):
     failures = []
     linenumber = []
     character = []
-    pep8opts = pycodestyle.StyleGuide(
+    codestyleopts = pycodestyle.StyleGuide(
         ignore=ignores['pep8'],
         max_line_length=120,
         format='pylint'
     ).options
-    report = StringReport(pep8opts)
+    report = StringReport(codestyleopts)
     failures = []
-    checker = pycodestyle.Checker(file, options=pep8opts, report=report)
+    checker = pycodestyle.Checker(file, options=codestyleopts, report=report)
     checker.check_all()
     report = checker.report
     if report.get_file_results() > 0:
@@ -92,13 +92,13 @@ def getfunc(file, context):
             error = l[l.rfind(end) + 2:]
         character = l.find('^')
         if error and character > -1:
-            classes.append([linenumber + ': ' + error.title(), linenumber, character])
+            classes.append([error.title(), linenumber, character])
     return classes
 
 
-class TEXT_OT_pep8_button(bpy.types.Operator):
+class TEXT_OT_codestyle_button(bpy.types.Operator):
     """Run Codestyle Check"""
-    bl_idname = "text.pep8_button"
+    bl_idname = "text.codestyle_button"
     bl_label = "Check Codestyle"
 
     @classmethod
@@ -107,16 +107,16 @@ class TEXT_OT_pep8_button(bpy.types.Operator):
 
     def execute(self, context):
         old_filename = bpy.context.space_data.text.filepath
-        bpy.types.Scene.pep8_name = old_filename
-        filename = bpy.utils.script_path_user() + "temp_pep8.py"
+        bpy.types.Scene.codestyle_name = old_filename
+        filename = bpy.utils.script_path_user() + "temp_codestyle.py"
         bpy.ops.text.save_as(filepath=filename, check_existing=False)
-        bpy.types.Scene.pep8 = getfunc(filename, context)
+        bpy.types.Scene.codestyle = getfunc(filename, context)
         os.remove(filename)
         bpy.context.space_data.text.filepath = old_filename
         return {'FINISHED'}
 
 
-class TEXT_PT_show_pep8(bpy.types.Panel):
+class TEXT_PT_show_codestyle(bpy.types.Panel):
     bl_space_type = 'TEXT_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Codestyle"
@@ -129,20 +129,29 @@ class TEXT_PT_show_pep8(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         st = context.space_data
-        layout.operator("text.pep8_button")
-        if bpy.types.Scene.pep8_name == bpy.context.space_data.text.filepath:
-            items = bpy.types.Scene.pep8
+        layout.use_property_split = False
+        layout.operator("text.codestyle_button")
+        print(bpy.context.space_data.text.filepath)
+        if bpy.types.Scene.codestyle_name == bpy.context.space_data.text.filepath:
+            items = bpy.types.Scene.codestyle
             for it in items:
                 cname = it[0]
                 cline = it[1]
+                character = it[2]
+
                 layout = layout.column(align=True)
-                layout.alignment = 'LEFT'
-                layout.operator("text.pep8_jump", text=cname).line = int(cline)
+                row = layout.row(align=True)
+                row.alignment = 'LEFT'
+                row.label(text="%4d " % int(cline))
+                prop = row.operator("text.codestyle_jump", text="%s" % (cname), emboss=False)
+                prop.line = int(cline)
+                prop.character = int(character)
+                row.label(text="")
 
 
-class TEXT_OT_pep8_jump(bpy.types.Operator):
+class TEXT_OT_codestyle_jump(bpy.types.Operator):
     """Jump to line"""
-    bl_idname = "text.pep8_jump"
+    bl_idname = "text.codestyle_jump"
     bl_label = "Codestyle Jump"
 
     line: IntProperty(default=0, options={'HIDDEN'})
@@ -153,21 +162,23 @@ class TEXT_OT_pep8_jump(bpy.types.Operator):
         return context.active_object is not None
 
     def execute(self, context):
+        bpy.context.space_data.show_line_highlight = True
         line = self.line
         character = self.character
-        #print(character)
+        print(character)
         if line > 0:
             bpy.ops.text.jump(line=line)
+            curtxt = os.path.basename(bpy.context.space_data.text.filepath)
+            bpy.data.texts[curtxt].select_set(line - 1, character, line - 1, character + 1)
         self.line = -1
-        #  bpy.ops.text.cursor_set(line, character)#, line, character) # I wish this would work
 
         return {'FINISHED'}
 
 
 classes = (
-    TEXT_PT_show_pep8,
-    TEXT_OT_pep8_jump,
-    TEXT_OT_pep8_button,
+    TEXT_PT_show_codestyle,
+    TEXT_OT_codestyle_jump,
+    TEXT_OT_codestyle_button,
     )
 
 
@@ -175,16 +186,16 @@ def register():
 
     for i in classes:
         bpy.utils.register_class(i)
-        bpy.types.Scene.pep8 = bpy.props.StringProperty()
-        bpy.types.Scene.pep8_name = bpy.props.StringProperty()
+        bpy.types.Scene.codestyle = bpy.props.StringProperty()
+        bpy.types.Scene.codestyle_name = bpy.props.StringProperty()
 
 
 def unregister():
 
     for i in classes:
         bpy.utils.unregister_class(i)
-        del bpy.types.Scene.pep8
-        del bpy.types.Scene.pep8_name
+        del bpy.types.Scene.codestyle
+        del bpy.types.Scene.codestyle_name
 
 
 if __name__ == "__main__":
