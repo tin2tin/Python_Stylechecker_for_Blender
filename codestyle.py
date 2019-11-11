@@ -168,7 +168,7 @@ class TEXT_OT_codestyle_jump(bpy.types.Operator):
         print(character)
         if line > 0:
             bpy.ops.text.jump(line=line)
-            curtxt = os.path.basename(bpy.context.space_data.text.filepath)
+            curtxt = bpy.context.space_data.text.name
             bpy.data.texts[curtxt].select_set(line - 1, character, line - 1, character + 1)
         self.line = -1
 
