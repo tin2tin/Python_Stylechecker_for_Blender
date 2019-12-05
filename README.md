@@ -3,7 +3,8 @@
 
 ### pycodestyle must be installed first:
 
-Locate your Blender's Python binary path.
+Locate your Blender's Python binary path by running bpy.app.binary_path_python in the Python Console. It will display the path to blender python binary. 
+
 Let's call it <BPYTHON> (in my case 2.80/python/bin/python.exe at the Blender installation).
 
 Run the following to enable pip operations in bpython:
