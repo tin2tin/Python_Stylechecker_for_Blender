@@ -2,7 +2,7 @@ bl_info = {
     "name": "Codestyle",
     "author": "tin2tin",
     "version": (1, 0),
-    "blender": (2, 80, 0),
+    "blender": (2, 82, 0),
     "location": "Text Editor > Sidebar > Codestyle",
     "description": "Runs pep8 stylechecks on current document",
     "warning": "Pycodestyle must be installed in your Blender Python folder with ex. pip",
@@ -11,12 +11,12 @@ bl_info = {
 }
 
 
-import bpy
-import os
+import bpy, os, subprocess, pip
 try:
     import pycodestyle
 except ImportError:
-    pycodestyle = None
+    pybin = bpy.app.binary_path_python
+    subprocess.check_call([pybin, '-m', 'pip', 'install', 'pycodestyle'])
 
 import re
 from bpy.props import PointerProperty, IntProperty, StringProperty, BoolProperty
