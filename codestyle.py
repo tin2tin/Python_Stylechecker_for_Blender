@@ -16,7 +16,12 @@ try:
     import pycodestyle
 except ImportError:
     pybin = bpy.app.binary_path_python
-    subprocess.check_call([pybin, '-m', 'pip', 'install', 'pycodestyle'])
+    subprocess.check_call([pybin, '-m', 'pip', 'install', '--upgrade', 'pip'])
+    try:
+        subprocess.check_call([pybin, '-m', 'pip', 'install', 'pycodestyle'])
+        import pycodestyle
+    except (PermissionError, subprocess.CalledProcessError, ModuleNotFoundError, ImportError) as e:
+        print("INSTALLATION ERROR: Installation of required 'pycodestyle' package failed. Please run Blender as Administrator and try again or install 'pycodestyle' manually in {}.".format(pylib))
 
 import re
 from bpy.props import PointerProperty, IntProperty, StringProperty, BoolProperty
@@ -27,6 +32,7 @@ ignores = {
         'W503',  # Line breaks should occur before a binary operator
         'W504',  # Line break occurred after a binary operator
         'E402',  # module level import not at top of file
+        'E501',  # line too long (> 79 characters)
     ]
 }
 
@@ -101,10 +107,6 @@ class TEXT_OT_codestyle_button(bpy.types.Operator):
     bl_idname = "text.codestyle_button"
     bl_label = "Check Codestyle"
 
-    @classmethod
-    def poll(cls, context):
-        return context.active_object is not None
-
     def execute(self, context):
         old_filename = bpy.context.space_data.text.filepath
         bpy.types.Scene.codestyle_name = old_filename
@@ -131,7 +133,6 @@ class TEXT_PT_show_codestyle(bpy.types.Panel):
         st = context.space_data
         layout.use_property_split = False
         layout.operator("text.codestyle_button")
-        print(bpy.context.space_data.text.filepath)
         if bpy.types.Scene.codestyle_name == bpy.context.space_data.text.filepath:
             items = bpy.types.Scene.codestyle
             for it in items:
@@ -186,16 +187,16 @@ def register():
 
     for i in classes:
         bpy.utils.register_class(i)
-        bpy.types.Scene.codestyle = bpy.props.StringProperty()
-        bpy.types.Scene.codestyle_name = bpy.props.StringProperty()
+    bpy.types.Scene.codestyle = bpy.props.StringProperty()
+    bpy.types.Scene.codestyle_name = bpy.props.StringProperty()
 
 
 def unregister():
 
     for i in classes:
         bpy.utils.unregister_class(i)
-        del bpy.types.Scene.codestyle
-        del bpy.types.Scene.codestyle_name
+    del bpy.types.Scene.codestyle
+    del bpy.types.Scene.codestyle_name
 
 
 if __name__ == "__main__":
